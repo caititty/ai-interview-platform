@@ -16,8 +16,8 @@ public class OpenApiConfig {
         return new OpenAPI()
                 .info(
                         new Info()
-                                .title("瓜分Offer API")
+                                .title("AI 智能面试与评估平台 API")
                                 .version("v1")
-                                .description("瓜分Offer AI 智能面试 Agent 平台 API（P1：冒烟接口 + 健康检查）"));
+                                .description("AI 智能面试与评估平台 API（P1：冒烟接口 + 健康检查）"));
     }
 }

@@ -3,15 +3,15 @@
 </p>
 
 <p align="center">
-  <img src="frontend/public/logo.svg" alt="GuaFen Offer Logo" width="120" height="120" style="border-radius:16px;" />
+  <img src="frontend/public/ai-interview-logo.png" alt="AI Interview and Evaluation Platform logo" width="120" height="120" />
 </p>
 
 <p align="center">
-  <b style="font-size:32px">GuaFen Offer · AI Interview Agent Platform</b>
+  <b style="font-size:32px">AI Interview &amp; Evaluation Platform</b>
 </p>
 
 <p align="center">
-  <i>Spring Boot + Spring AI + LangGraph4j · AI Interview Agent Platform</i>
+  <i>Spring Boot + Spring AI + LangGraph4j · AI Interview &amp; Evaluation Platform</i>
 </p>
 
 <p align="center">
@@ -26,9 +26,11 @@
 
 An AI interview-agent service platform built with Spring Boot 3.5 + Spring AI 1.1 + Java 21 virtual threads + LangGraph4j. It covers position / question-bank / resume management, RAG semantic retrieval, AI resume parsing, real-time interview Q&A (dynamic follow-up questions, interviewer persona, TTS voice playback, disconnect recovery), and five-dimension evaluation with report generation.
 
+This project builds on an open-source project. See [LICENSE](LICENSE) for the original copyright and license notice.
+
 ```mermaid
 mindmap
-  root((GuaFenOffer AI Interview Agent Platform))
+  root((AI Interview and Evaluation Platform))
     User Interfaces
       Admin Portal
       Candidate Portal

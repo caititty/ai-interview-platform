@@ -8,8 +8,8 @@
     <artifactId>ai-ms</artifactId>
     <version>1.0.0-SNAPSHOT</version>
     <packaging>pom</packaging>
-    <name>wzxg-ai-ms</name>
-    <description>瓜分Offer AI 智能面试 Agent 平台</description>
+    <name>AI Interview and Evaluation Platform</name>
+    <description>AI 智能面试与评估平台</description>
 
     <modules>
         <module>interview-core</module>

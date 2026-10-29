@@ -3,15 +3,15 @@
 </p>
 
 <p align="center">
-  <img src="frontend/public/logo.svg" alt="瓜分Offer Logo" width="120" height="120" style="border-radius:16px;" />
+  <img src="frontend/public/ai-interview-logo.png" alt="AI 智能面试与评估平台标识" width="120" height="120" />
 </p>
 
 <p align="center">
-  <b style="font-size:32px">瓜分Offer · AI 智能面试 Agent 平台</b>
+  <b style="font-size:32px">AI 智能面试与评估平台</b>
 </p>
 
 <p align="center">
-  <i>Spring Boot + Spring AI + LangGraph4j · AI Interview Agent Platform</i>
+  <i>Spring Boot + Spring AI + LangGraph4j · AI Interview &amp; Evaluation Platform</i>
 </p>
 
 <p align="center">
@@ -26,10 +26,11 @@
 
 基于 Spring Boot 3.5 + Spring AI 1.1 + Java 21 虚拟线程 + LangGraph4j 构建的 AI 面试 Agent 服务平台。覆盖岗位/题库/简历管理、RAG 语义检索、简历 AI 解析、面试实时问答（动态追问、面试官人设、TTS 语音播报、断线恢复）以及五维评估与报告生成。
 
+本项目基于开源项目二次开发，原项目版权及许可声明见 [LICENSE](LICENSE)。
 
 ```mermaid
 mindmap
-  root((瓜分 Offer AI 面试 Agent 平台))
+  root((AI 智能面试与评估平台))
 
     用户端
       管理端

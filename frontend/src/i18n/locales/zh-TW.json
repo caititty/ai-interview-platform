@@ -1,7 +1,7 @@
 {
   "common": {
-    "appName": "瓜分Offer",
-    "platformSlogan": "AI 智慧面試 Agent 平台",
+    "appName": "AI 智慧面試與評估平台",
+    "platformSlogan": "讓每一次面試更有價值",
     "confirm": "確定",
     "cancel": "取消",
     "retry": "重試",
@@ -114,7 +114,7 @@
   },
   "dashboard": {
     "title": "平台概覽",
-    "subtitle": "瓜分offer AI 面試 Agent 平台 · 管理端",
+    "subtitle": "AI 智慧面試與評估平台 · 管理端",
     "positionCount": "崗位總數",
     "questionCount": "題目總數",
     "resumeCount": "簡歷總數",
