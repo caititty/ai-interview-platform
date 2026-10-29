@@ -1,0 +1,72 @@
+import { Routes, Route } from 'react-router-dom';
+import { StarfieldBackground } from '@/components/starfield/StarfieldBackground';
+import { AppShell } from '@/components/layout/AppShell';
+import { ProtectedRoute } from '@/components/ProtectedRoute';
+import { AdminRoute } from '@/components/AdminRoute';
+import { LoginPage } from '@/routes/LoginPage';
+import { DashboardPage } from '@/routes/dashboard/DashboardPage';
+import { PositionListPage } from '@/routes/positions/PositionListPage';
+import { PositionDetailPage } from '@/routes/positions/PositionDetailPage';
+import { QuestionListPage } from '@/routes/questions/QuestionListPage';
+import { QuestionDetailPage } from '@/routes/questions/QuestionDetailPage';
+import { QuestionImportPage } from '@/routes/questions/QuestionImportPage';
+import { QuestionNoteImportPage } from '@/routes/questions/QuestionNoteImportPage';
+import { ResumeListPage } from '@/routes/resumes/ResumeListPage';
+import { ResumeDetailPage } from '@/routes/resumes/ResumeDetailPage';
+import { InterviewListPage } from '@/routes/interview/InterviewListPage';
+import { InterviewCreatePage } from '@/routes/interview/InterviewCreatePage';
+import { InterviewConsolePage } from '@/routes/interview/InterviewConsolePage';
+import { InterviewRoomPage } from '@/routes/interview/InterviewRoomPage';
+import { InterviewReportPage } from '@/routes/interview/InterviewReportPage';
+import { RagDebugPage } from '@/routes/rag/RagDebugPage';
+import { SettingsPage } from '@/routes/settings/SettingsPage';
+import { MonitorPage } from '@/routes/monitor/MonitorPage';
+import { CandidateAccessPage } from '@/routes/access/CandidateAccessPage';
+import { CandidateRoomPage } from '@/routes/access/CandidateRoomPage';
+
+export default function App() {
+  return (
+    <>
+      <StarfieldBackground />
+      <Routes>
+        <Route path="/login" element={<LoginPage />} />
+        {/* 候选端免登录入口（无需登录，密码准入） */}
+        <Route path="/i/:accessToken" element={<CandidateAccessPage />} />
+        <Route path="/i/:accessToken/room" element={<CandidateRoomPage />} />
+        <Route
+          element={
+            <ProtectedRoute>
+              <AppShell />
+            </ProtectedRoute>
+          }
+        >
+          <Route index element={<DashboardPage />} />
+          <Route path="positions" element={<PositionListPage />} />
+          <Route path="positions/:id" element={<PositionDetailPage />} />
+          <Route path="questions" element={<QuestionListPage />} />
+          <Route path="questions/:id" element={<QuestionDetailPage />} />
+          <Route path="questions/import" element={<QuestionImportPage />} />
+          <Route path="questions/note-import" element={<QuestionNoteImportPage />} />
+          <Route path="resumes" element={<ResumeListPage />} />
+          <Route path="resumes/:id" element={<ResumeDetailPage />} />
+          <Route path="interviews" element={<InterviewListPage />} />
+          <Route path="interviews/new" element={<InterviewCreatePage />} />
+          <Route path="interviews/:id" element={<InterviewConsolePage />} />
+          <Route path="interviews/:id/room" element={<InterviewRoomPage />} />
+          <Route path="interviews/:id/report" element={<InterviewReportPage />} />
+          <Route path="rag" element={<RagDebugPage />} />
+          <Route path="settings" element={<SettingsPage />} />
+          {/* 监控：仅 ADMIN 可见 */}
+          <Route
+            path="monitor"
+            element={
+              <AdminRoute>
+                <MonitorPage />
+              </AdminRoute>
+            }
+          />
+        </Route>
+      </Routes>
+    </>
+  );
+}

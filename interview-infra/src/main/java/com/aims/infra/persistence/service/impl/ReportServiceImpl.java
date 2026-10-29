@@ -1,0 +1,227 @@
+package com.aims.infra.persistence.service.impl;
+
+import com.aims.agent.DefaultReportAgent;
+import com.aims.agent.ReportPromptBuilder;
+import com.aims.core.common.ErrorCode;
+import com.aims.core.common.exception.BizException;
+import com.aims.core.evaluation.DimensionAggregate;
+import com.aims.core.evaluation.EvaluationDimension;
+import com.aims.core.interview.ConflictDetail;
+import com.aims.core.report.ReportContext;
+import com.aims.core.report.ReportResult;
+import com.aims.core.session.SessionStatus;
+import com.aims.infra.persistence.entity.EvaluationEntity;
+import com.aims.infra.persistence.entity.InterviewRoundEntity;
+import com.aims.infra.persistence.entity.InterviewSessionEntity;
+import com.aims.infra.persistence.entity.PositionEntity;
+import com.aims.infra.persistence.entity.ReportEntity;
+import com.aims.infra.persistence.entity.ResumeEntity;
+import com.aims.infra.persistence.mapper.ReportMapper;
+import com.aims.infra.persistence.service.ConflictDetailsJson;
+import com.aims.infra.persistence.service.EvaluationService;
+import com.aims.infra.persistence.service.InterviewRoundService;
+import com.aims.infra.persistence.service.InterviewSessionService;
+import com.aims.infra.persistence.service.PositionService;
+import com.aims.infra.persistence.service.ReportService;
+import com.aims.infra.persistence.service.ResumeService;
+import com.aims.infra.persistence.service.ResumeSummaryBuilder;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.math.BigDecimal;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
+
+/** 报告服务实现。 */
+@Service
+public class ReportServiceImpl implements ReportService {
+
+    private static final Logger log = LoggerFactory.getLogger(ReportServiceImpl.class);
+
+    private final ReportMapper reportMapper;
+    private final EvaluationService evaluationService;
+    private final InterviewSessionService sessionService;
+    private final InterviewRoundService roundService;
+    private final PositionService positionService;
+    private final ResumeService resumeService;
+    private final ResumeSummaryBuilder resumeSummaryBuilder;
+    private final DefaultReportAgent reportAgent;
+    private final ObjectMapper objectMapper;
+
+    public ReportServiceImpl(
+            ReportMapper reportMapper,
+            EvaluationService evaluationService,
+            InterviewSessionService sessionService,
+            InterviewRoundService roundService,
+            PositionService positionService,
+            ResumeService resumeService,
+            ResumeSummaryBuilder resumeSummaryBuilder,
+            DefaultReportAgent reportAgent,
+            ObjectMapper objectMapper) {
+        this.reportMapper = reportMapper;
+        this.evaluationService = evaluationService;
+        this.sessionService = sessionService;
+        this.roundService = roundService;
+        this.positionService = positionService;
+        this.resumeService = resumeService;
+        this.resumeSummaryBuilder = resumeSummaryBuilder;
+        this.reportAgent = reportAgent;
+        this.objectMapper = objectMapper;
+    }
+
+    @Override
+    public void generateReport(Long sessionId) {
+        // FE.15 P11 幂等守卫：Kafka at-least-once 下重复投递时报告已生成（DONE/COMPLETED），
+        // 跳过 AI 调用避免重复生成报告浪费 token。
+        InterviewSessionEntity existing = sessionService.getById(sessionId);
+        String evalStatus = existing.getEvaluationStatus();
+        if ("DONE".equals(evalStatus) || "COMPLETED".equals(existing.getStatus())) {
+            log.info("报告已生成，跳过重复消费 sessionId={} evaluationStatus={}", sessionId, evalStatus);
+            return;
+        }
+
+        log.info("开始生成报告 sessionId={}", sessionId);
+
+        // 加载全部评分
+        List<EvaluationEntity> evaluations = evaluationService.listBySession(sessionId);
+
+        // 聚合各维度平均分
+        DimensionAggregate aggregate = evaluationService.aggregateDimensions(sessionId);
+
+        // 计算综合加权得分
+        double weightedScore = calculateWeightedScore(aggregate);
+        log.info("综合加权得分 sessionId={} score={}", sessionId, String.format("%.2f", weightedScore));
+
+        // 加载会话信息
+        InterviewSessionEntity session = sessionService.getById(sessionId);
+        PositionEntity position = positionService.getById(session.getPositionId());
+        ResumeEntity resume = resumeService.getById(session.getResumeId());
+
+        // 构建对话摘要
+        String conversationSummary = buildConversationSummary(sessionId);
+
+        // v1.1-F4：从轮次聚合"候选人与简历矛盾点"清单（Kafka 链路从库读）
+        Map<String, List<ConflictDetail>> conflictsByRound = new LinkedHashMap<>();
+        for (InterviewRoundEntity round : roundService.listBySession(sessionId)) {
+            List<ConflictDetail> roundConflicts =
+                    ConflictDetailsJson.parse(round.getConflictDetails());
+            if (!roundConflicts.isEmpty()) {
+                conflictsByRound.put(
+                        round.getSeq() != null
+                                ? String.valueOf(round.getSeq())
+                                : round.getParentSeq() + ":" + round.getFollowUpIndex(),
+                        roundConflicts);
+            }
+        }
+        String conflictSummary = ReportPromptBuilder.formatConflictsByRound(conflictsByRound);
+
+        // 构建评分汇总
+        List<ReportContext.EvaluationSummary> evalSummaries =
+                evaluations.stream()
+                        .map(
+                                e ->
+                                        new ReportContext.EvaluationSummary(
+                                                0, // seq 由 listBySession 排序决定，此处不需要
+                                                e.getDimension(),
+                                                e.getScore(),
+                                                e.getComment(),
+                                                e.getEvidenceQuote()))
+                        .collect(Collectors.toList());
+
+        // 调用 ReportAgent 生成报告
+        ReportContext context =
+                new ReportContext(
+                        sessionId,
+                        resume.getCandidateName(),
+                        position.getTitle(),
+                        position.getJdText(),
+                        resumeSummaryBuilder.build(resume),
+                        evalSummaries,
+                        conversationSummary,
+                        conflictSummary);
+        ReportResult result = reportAgent.generate(context, aggregate, weightedScore);
+
+        // 序列化 dimensionsJson
+        String dimensionsJson;
+        try {
+            dimensionsJson = objectMapper.writeValueAsString(aggregate.getAll());
+        } catch (JsonProcessingException e) {
+            log.error("序列化维度聚合结果失败 sessionId={}", sessionId, e);
+            dimensionsJson = "{}";
+        }
+
+        // 保存报告
+        ReportEntity entity = new ReportEntity();
+        entity.setSessionId(sessionId);
+        entity.setSummary(result.summary());
+        entity.setDimensionsJson(dimensionsJson);
+        entity.setRecommendation(result.recommendation().name());
+        reportMapper.upsert(entity);
+
+        // 更新会话总分
+        sessionService.updateTotalScore(sessionId, BigDecimal.valueOf(weightedScore));
+
+        // 状态转为 COMPLETED
+        sessionService.updateStatus(sessionId, SessionStatus.COMPLETED);
+        sessionService.markEnded(sessionId);
+        sessionService.updateEvaluationStatus(sessionId, "DONE");
+        log.info("报告生成完成 sessionId={}", sessionId);
+    }
+
+    @Override
+    public ReportEntity getBySession(Long sessionId) {
+        // 校验会话存在
+        sessionService.getById(sessionId);
+        ReportEntity report = reportMapper.findBySession(sessionId);
+        if (report == null) {
+            throw new BizException(ErrorCode.REPORT_NOT_FOUND);
+        }
+        return report;
+    }
+
+    private double calculateWeightedScore(DimensionAggregate aggregate) {
+        double score = 0.0;
+        for (EvaluationDimension dim : EvaluationDimension.values()) {
+            DimensionAggregate.DimensionScore ds = aggregate.get(dim);
+            if (ds != null) {
+                score += ds.avgScore() * dim.getWeight();
+            }
+        }
+        return score;
+    }
+
+    private String buildConversationSummary(Long sessionId) {
+        List<InterviewRoundEntity> rounds = roundService.listBySession(sessionId);
+        StringBuilder sb = new StringBuilder();
+        for (InterviewRoundEntity round : rounds) {
+            if (round.getAnswer() != null && !round.getAnswer().isBlank()) {
+                // 追问显示 Q{parentSeq}.{followUpIndex}，主问题显示 Q{seq}
+                String roundLabel =
+                        round.getParentSeq() != null
+                                ? "Q"
+                                        + round.getParentSeq()
+                                        + "."
+                                        + (round.getFollowUpIndex() != null
+                                                ? round.getFollowUpIndex()
+                                                : 1)
+                                : "Q" + (round.getSeq() != null ? round.getSeq() : "?");
+                sb.append(roundLabel)
+                        .append(": ")
+                        .append(truncate(round.getQuestion(), 200))
+                        .append("\nA: ")
+                        .append(truncate(round.getAnswer(), 500))
+                        .append("\n\n");
+            }
+        }
+        return sb.toString();
+    }
+
+    private String truncate(String text, int max) {
+        if (text == null) return "";
+        return text.length() > max ? text.substring(0, max) + "..." : text;
+    }
+}

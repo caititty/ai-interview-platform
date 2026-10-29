@@ -1,0 +1,29 @@
+package com.aims.core.resume;
+
+import java.util.List;
+
+/**
+ * 解析后的简历结构。
+ *
+ * @param candidateName 候选人姓名
+ * @param phone 联系电话
+ * @param email 邮箱
+ * @param yearsOfExperience 工作年限
+ * @param education 学历
+ * @param currentTitle 当前职位
+ * @param skills 技能列表
+ * @param workExperiences 工作或实习经历
+ * @param projectExperiences 项目经历
+ * @param awards 竞赛奖项或证书列表
+ */
+public record ParsedResume(
+        String candidateName,
+        String phone,
+        String email,
+        Integer yearsOfExperience,
+        String education,
+        String currentTitle,
+        List<String> skills,
+        List<WorkExperience> workExperiences,
+        List<ProjectExperience> projectExperiences,
+        List<Award> awards) {}

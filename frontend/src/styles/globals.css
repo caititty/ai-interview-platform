@@ -1,0 +1,218 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* 浅色主题（默认） */
+:root {
+  /* 背景层 */
+  --space-900: #f5f7fa;
+  --space-800: #eef1f6;
+  --space-700: #ffffff;
+  --space-600: #f0f3f8;
+
+  /* 文字 */
+  --text-primary: #1a1f36;
+  --text-secondary: #4a5170;
+  --text-muted: #8a92ad;
+
+  /* 银色流光强调（浅色下为中性银灰，无蓝调） */
+  --silver-100: #8a94a6;
+  --silver-200: #5d6675;
+  --silver-300: #a9b2bf;
+  --silver-400: #c4cbd4;
+  --silver-glow: #7b8496;
+  --silver-dim: #6d7684;
+
+  /* 语义色（浅色下调深） */
+  --success: #0d9d5e;
+  --warning: #d97e0d;
+  --danger: #d6377e;
+  --info: var(--silver-200);
+
+  /* 强调色（白天） */
+  --accent-primary: #4a6cf7;
+
+  /* 语义层变量 */
+  --surface-overlay: rgba(255, 255, 255, 0.6);
+  --surface-hover: rgba(0, 0, 0, 0.06);
+  --border-default: rgba(0, 0, 0, 0.12);
+  --border-subtle: rgba(0, 0, 0, 0.05);
+  --border-strong: rgba(0, 0, 0, 0.2);
+  --modal-scrim: rgba(0, 0, 0, 0.4);
+  --shadow-glow: rgba(60, 80, 120, 0.14);
+}
+
+/* 深色主题：黑灰银主色调（中性冷灰，无蓝紫调） */
+.dark {
+  --space-900: #020204;
+  --space-800: #07070c;
+  --space-700: #0c0c14;
+  --space-600: #12121c;
+
+  --text-primary: #eceef2;
+  --text-secondary: #b3b6bd;
+  /* 对比度校准：对最暗背景 #020204 对比度约 6.2:1，满足 WCAG AA */
+  --text-muted: #8a8e96;
+
+  --silver-100: #f4f5f7;
+  --silver-200: #d9dbe0;
+  --silver-300: #adb1b8;
+  --silver-400: #cdd0d5;
+  --silver-glow: #cdd0d5;
+  --silver-dim: #7a7e86;
+
+  --success: #5dffac;
+  --warning: #ffc24d;
+  --danger: #ff5ea8;
+  --info: var(--silver-200);
+
+  /* 强调色（黑夜） */
+  --accent-primary: #5d7bff;
+
+  /* 半透明中性黑灰，配合 backdrop-blur 形成毛玻璃、透出星空；控件级使用较低不透明度保证可读 */
+  --surface-overlay: rgba(24, 25, 30, 0.45);
+  --surface-hover: rgba(36, 37, 44, 0.55);
+  --border-default: rgba(255, 255, 255, 0.1);
+  --border-subtle: rgba(255, 255, 255, 0.06);
+  --border-strong: rgba(255, 255, 255, 0.22);
+  --modal-scrim: rgba(0, 0, 0, 0.72);
+  --shadow-glow: rgba(220, 224, 230, 0.05);
+}
+
+/* 深色夜空背景：纯黑系多层渐变，极淡银灰星云，保留层次感 */
+.dark body {
+  background-color: #020204;
+  background-image:
+    radial-gradient(ellipse at 75% 90%, rgba(210, 214, 224, 0.04), transparent 55%),
+    radial-gradient(ellipse at top, #0a0a10 0%, #040406 55%, #020204 100%);
+  background-attachment: fixed;
+}
+
+* {
+  border-color: var(--border-subtle);
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background-color: var(--space-900);
+  color: var(--text-primary);
+  font-family: 'Inter', 'HarmonyOS Sans SC', 'PingFang SC', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* 滚动条 */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--surface-hover);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--border-strong);
+}
+
+/* 选中文本 */
+::selection {
+  background: var(--surface-hover);
+  color: var(--silver-100);
+}
+
+/* 输入框 placeholder */
+input::placeholder,
+textarea::placeholder {
+  color: var(--text-muted);
+}
+
+/* View Transitions: 主题切换圆形扩散动画 */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+::view-transition-old(root) {
+  z-index: 1;
+}
+
+::view-transition-new(root) {
+  z-index: 2;
+}
+
+/* 尊重用户动画偏好 */
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation: none !important;
+  }
+}
+
+/* 自定义 Checkbox 勾选标记 */
+input[type='checkbox'] {
+  position: relative;
+}
+input[type='checkbox']:checked::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 10px;
+  height: 10px;
+  transform: translate(-50%, -50%);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'%3E%3C/polyline%3E%3C/svg%3E");
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  pointer-events: none;
+}
+
+/* 自定义 Range 滑块 */
+input[type='range'] {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  cursor: pointer;
+}
+input[type='range']::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: 9999px;
+  background: var(--border-default);
+}
+input[type='range']::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  margin-top: -5px;
+  height: 14px;
+  width: 14px;
+  border-radius: 9999px;
+  background: var(--silver-300);
+  border: 1px solid var(--silver-400);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+  transition: transform 0.15s ease;
+}
+input[type='range']:hover::-webkit-slider-thumb {
+  transform: scale(1.15);
+}
+input[type='range']::-moz-range-track {
+  height: 4px;
+  border-radius: 9999px;
+  background: var(--border-default);
+}
+input[type='range']::-moz-range-thumb {
+  height: 12px;
+  width: 12px;
+  border-radius: 9999px;
+  background: var(--silver-300);
+  border: 1px solid var(--silver-400);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+  transition: transform 0.15s ease;
+}
+input[type='range']:hover::-moz-range-thumb {
+  transform: scale(1.15);
+}

@@ -1,0 +1,16 @@
+services:
+  redis:
+    image: redis:7.4-alpine
+  minio:
+    image: milvusdb/minio:RELEASE.2024-12-18T13-15-44Z
+  minio-init:
+    image: milvusdb/minio:RELEASE.2024-12-18T13-15-44Z
+  kafka:
+    ports: !override
+      - "127.0.0.1:${KAFKA_PORT:-9092}:19092"
+  prometheus:
+    ports: !override
+      - "127.0.0.1:${PROMETHEUS_PORT:-9090}:9090"
+  grafana:
+    ports: !override
+      - "127.0.0.1:${GRAFANA_PORT:-13000}:3000"

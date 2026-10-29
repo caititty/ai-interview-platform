@@ -1,0 +1,288 @@
+package com.aims.gateway.ws;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+
+/** WebSocket 服务端消息。 */
+@JsonInclude(JsonInclude.Include.NON_NULL)
+public record WsOutbound(
+        String type,
+        Long sessionId,
+        Long roundId,
+        Integer seq,
+        Integer parentSeq,
+        Integer followUpIndex,
+        String status,
+        Integer code,
+        String message,
+        String text,
+        String followUpType,
+        String audioUrl,
+        Integer durationMs,
+        String finishedBy,
+        String finishReason,
+        String eventType,
+        String occurredAt) {
+
+    public static WsOutbound sessionReady(Long sessionId, String status) {
+        return new WsOutbound(
+                "SESSION_READY",
+                sessionId,
+                null,
+                null,
+                null,
+                null,
+                status,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null);
+    }
+
+    public static WsOutbound questionStart(Long sessionId, Long roundId, Integer seq) {
+        return new WsOutbound(
+                "QUESTION_START",
+                sessionId,
+                roundId,
+                seq,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null);
+    }
+
+    /** 追问专用：携带 followUpType、parentSeq、followUpIndex，seq 为 null。 */
+    public static WsOutbound questionStart(
+            Long sessionId,
+            Long roundId,
+            Integer seq,
+            String followUpType,
+            Integer parentSeq,
+            Integer followUpIndex) {
+        return new WsOutbound(
+                "QUESTION_START",
+                sessionId,
+                roundId,
+                seq,
+                parentSeq,
+                followUpIndex,
+                null,
+                null,
+                null,
+                null,
+                followUpType,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null);
+    }
+
+    public static WsOutbound questionChunk(Long sessionId, Long roundId, String text) {
+        return new WsOutbound(
+                "QUESTION_CHUNK",
+                sessionId,
+                roundId,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                text,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null);
+    }
+
+    public static WsOutbound questionEnd(Long sessionId, Long roundId, Integer seq, String text) {
+        return new WsOutbound(
+                "QUESTION_END",
+                sessionId,
+                roundId,
+                seq,
+                null,
+                null,
+                null,
+                null,
+                null,
+                text,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null);
+    }
+
+    public static WsOutbound answerAck(Long sessionId, Long roundId) {
+        return new WsOutbound(
+                "ANSWER_ACK",
+                sessionId,
+                roundId,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null);
+    }
+
+    public static WsOutbound status(Long sessionId, String status) {
+        return status(sessionId, status, null, null);
+    }
+
+    /** 状态广播：可选携带结束原因（finishedBy/finishReason），用于前端结束回执。 */
+    public static WsOutbound status(
+            Long sessionId, String status, String finishedBy, String finishReason) {
+        return new WsOutbound(
+                "STATUS",
+                sessionId,
+                null,
+                null,
+                null,
+                null,
+                status,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                finishedBy,
+                finishReason,
+                null,
+                null);
+    }
+
+    public static WsOutbound heartbeatAck(Long sessionId) {
+        return new WsOutbound(
+                "HEARTBEAT_ACK",
+                sessionId,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null);
+    }
+
+    public static WsOutbound completed(Long sessionId) {
+        return completed(sessionId, null, null);
+    }
+
+    /** 会话完成广播：可选携带结束原因。 */
+    public static WsOutbound completed(Long sessionId, String finishedBy, String finishReason) {
+        return new WsOutbound(
+                "SESSION_COMPLETED",
+                sessionId,
+                null,
+                null,
+                null,
+                null,
+                "COMPLETED",
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                finishedBy,
+                finishReason,
+                null,
+                null);
+    }
+
+    public static WsOutbound error(int code, String message) {
+        return new WsOutbound(
+                "ERROR", null, null, null, null, null, null, code, message, null, null, null, null,
+                null, null, null, null);
+    }
+
+    /** TTS 音频合成完成通知。 */
+    public static WsOutbound audioReady(
+            Long sessionId, Long roundId, String audioUrl, Integer durationMs) {
+        return new WsOutbound(
+                "AUDIO_READY",
+                sessionId,
+                roundId,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                audioUrl,
+                durationMs,
+                null,
+                null,
+                null,
+                null);
+    }
+
+    /**
+     * 防作弊事件实时广播（管理端监控面板用；广播时排除 GUEST 身份回环）。
+     *
+     * <p>前端以 {@code text}（eventType）与 {@code durationMs}/{@code occurredAt} 聚合实时数值。
+     */
+    public static WsOutbound proctorEvent(
+            Long sessionId, String eventType, Integer durationMs, String occurredAt) {
+        return new WsOutbound(
+                "PROCTOR_EVENT",
+                sessionId,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                durationMs,
+                null,
+                null,
+                eventType,
+                occurredAt);
+    }
+}

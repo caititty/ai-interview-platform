@@ -1,0 +1,35 @@
+# 本地开发环境（默认 profile）：连接 docker-compose 启动的基础设施
+# 端口与 docker/.env 对齐（非标准端口避免与本机已安装的服务冲突）
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:${POSTGRES_PORT:15432}/aims?stringtype=unspecified
+    username: ${POSTGRES_USER:aims}
+    password: ${POSTGRES_PASSWORD:aims123}
+    driver-class-name: org.postgresql.Driver
+  data:
+    redis:
+      host: localhost
+      port: ${REDIS_PORT:16379}
+      password: ${REDIS_PASSWORD:aims123}
+  kafka:
+    bootstrap-servers: localhost:${KAFKA_PORT:9092}
+
+aims:
+  minio:
+    endpoint: http://localhost:${MINIO_API_PORT:9000}
+    access-key: ${MINIO_ROOT_USER:aims}
+    secret-key: ${MINIO_ROOT_PASSWORD:aims12345}
+    buckets: aims-resume,aims-audio,aims-report
+
+interview:
+  checkpoint:
+    ttl-hours: 24
+    history-enabled: true
+  engine:
+    enabled: true  # LangGraph4j 灰度开关：false=旧命令式Handler，true=Engine编排
+  supervisor:
+    enabled: true  # F1-SupervisorAgent 灰度开关：false=纯透传（不参与决策），true=SUPERVISE节点参与决策
+
+logging:
+  level:
+    com.aims: DEBUG
